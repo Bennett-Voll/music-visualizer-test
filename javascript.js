@@ -1,3 +1,9 @@
+/**
+ * Shuffle an array
+ * 
+ * @param {Array} array
+ * @return {Array}
+ */
 function shuffle(array) {
   var currentIndex = array.length, temporaryValue, randomIndex;
 
@@ -51,6 +57,30 @@ function useIndexMapper(mapper, array) {
     return newArray;
 }
 
+/**
+ * Create a new array of size array.length / interval in which each
+ * element represents the average over each interval in the original array
+ * 
+ * @param {Array} array
+ * @param {Number} interval
+ * @return {Array}
+ */
+function averageOutOnIntervals(array, interval) {
+    var newArray = [];
+    var sum = 0;
+
+    array.forEach((e, i) => {
+        sum += e;
+
+        if (i % interval === interval - 1) {
+            newArray.push(sum / interval);
+            sum = 0;
+        }
+    });
+
+    return newArray;
+}
+
 function preload() {
     sound = loadSound('assets/boc.mp3');
 }
@@ -62,8 +92,10 @@ function setup() {
     sound.amp(0.2);
 }
 
+var spectrumInterval = 16;
+
 // 1024 is the size of both the spectrum array and the waveform array
-var indexMapper = createIndexMapper(1024);
+var indexMapper = createIndexMapper(1024 / spectrumInterval);
 
 function draw() {
     background(0);
@@ -72,7 +104,7 @@ function draw() {
     var centerY = height / 2;
     var minLength = Math.min(width, height) / 2;
 
-    var spectrum = useIndexMapper(indexMapper, fft.analyze());
+    var spectrum = useIndexMapper(indexMapper, averageOutOnIntervals(fft.analyze(), spectrumInterval));
     var waveform = fft.waveform();
 
     noFill();
@@ -81,7 +113,7 @@ function draw() {
     strokeWeight(1);
     for (var i = 0; i < waveform.length; i += 1) {
         var waveI = i;
-        var specI = i === waveform.length - 1 ? i : i - i % 4;
+        var specI = Math.floor(map(i, 0, waveform.length - 1, 0, 1024 / spectrumInterval));
 
         var deg = map(i, 0, waveform.length, 0, Math.PI * 2);
 
