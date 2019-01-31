@@ -121,8 +121,8 @@ function preload() {
 var cnv;
 
 // 1024 is the size of both the spectrum array and the waveform array
-var spectrumInterval = 16;
-var spectrumSize = 1024 / spectrumInterval;
+var spectrumInterval = 10;
+var spectrumSize = Math.ceil(1024 / spectrumInterval);
 var indexMapper = createIndexMapper(spectrumSize);
 
 function setup() {
@@ -141,20 +141,23 @@ function draw() {
     var centerY = height / 2;
     var minLength = Math.min(width, height) / 2;
 
-    var spectrum = useIndexMapper(indexMapper, averageOutOnIntervals(fft.analyze(), spectrumInterval));
+    var realSpectrum = fft.analyze();
+    var spectrum = useIndexMapper(indexMapper, averageOutOnIntervals(realSpectrum, spectrumInterval));
     var waveform = fft.waveform();
 
-    var averageSizeBiased = average(
-        sizeBiasArray(
-            waveform.map((e) => map(e, -1, 1, 0, minLength / 2)).concat(
-                spectrum.map((e) => map(e, 0, 255, 0, minLength / 2)),
-            ), 0.1
+    var averageSize = average(
+        waveform.map((e) => map(Math.abs(e), 0, 1, minLength / 4, minLength * 1.8)).concat(
+            realSpectrum.map((e) => map(e, 0, 255, 0, minLength * 1.8)),
         ),
     );
 
-    noFill();
+    // console.log(averageSize)
+
+    // set fill to this weird color that grows with the averageSize
+    fill(map(averageSize, 0, 255, 0, 200) - minLength / 2 + 100, 0, 0);
+    
     beginShape();
-    stroke(196, 11, 11); // waveform is red
+    stroke(160, 11, 11); // waveform is red
     strokeWeight(1);
     for (var i = 0; i < waveform.length; i += 1) {
         var waveI = i;
@@ -176,7 +179,7 @@ function draw() {
     endShape(CLOSE);
 
     textAlign(CENTER, CENTER);
-    textSize(averageSizeBiased);
+    textSize(averageSize);
     text('♫', centerX, centerY);
 }
 
