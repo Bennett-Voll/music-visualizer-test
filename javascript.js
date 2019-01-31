@@ -118,19 +118,21 @@ function preload() {
     sound = loadSound('assets/boc.mp3');
 }
 
+var cnv;
+
+// 1024 is the size of both the spectrum array and the waveform array
+var spectrumInterval = 16;
+var spectrumSize = 1024 / spectrumInterval;
+var indexMapper = createIndexMapper(spectrumSize);
+
 function setup() {
-    var cnv = createCanvas(window.innerWidth, window.innerHeight);
+    cnv = createCanvas(window.innerWidth, window.innerHeight);
     cnv.mouseClicked(togglePlay);
     fft = new p5.FFT();
     sound.amp(0.2);
 
     textFont('Impact');
 }
-
-// 1024 is the size of both the spectrum array and the waveform array
-var spectrumInterval = 16;
-var spectrumSize = 1024 / spectrumInterval;
-var indexMapper = createIndexMapper(spectrumSize);
 
 function draw() {
     background(0);
@@ -186,3 +188,5 @@ function togglePlay() {
         sound.loop();
     }
 }
+
+window.addEventListener('resize', () => resizeCanvas(window.innerWidth, window.innerHeight))
