@@ -154,7 +154,7 @@ function draw() {
 
     textAlign(CENTER, CENTER);
     textSize(averageSize);
-    text('Q', centerX, centerY);
+    text('♫', centerX, centerY);
 }
 
 // fade sound if mouse is over canvas
