@@ -92,10 +92,10 @@ function setup() {
     sound.amp(0.2);
 }
 
-var spectrumInterval = 16;
-
 // 1024 is the size of both the spectrum array and the waveform array
-var indexMapper = createIndexMapper(1024 / spectrumInterval);
+var spectrumInterval = 16;
+var spectrumSize = 1024 / spectrumInterval;
+var indexMapper = createIndexMapper(spectrumSize);
 
 function draw() {
     background(0);
@@ -113,7 +113,7 @@ function draw() {
     strokeWeight(1);
     for (var i = 0; i < waveform.length; i += 1) {
         var waveI = i;
-        var specI = Math.floor(map(i, 0, waveform.length - 1, 0, 1024 / spectrumInterval));
+        var specI = Math.floor(map(i, 0, waveform.length - 1, 0, spectrumSize));
 
         var deg = map(i, 0, waveform.length, 0, Math.PI * 2);
 
@@ -128,11 +128,7 @@ function draw() {
         
         vertex(x, y);
     }
-    vertex(
-        centerX + map(waveform[0], -1, 1, 0, minLength / 2) + map(spectrum[0], 0, 255, 0, minLength / 3),
-        centerY
-    );
-    endShape();
+    endShape(CLOSE);
 }
 
 // fade sound if mouse is over canvas
