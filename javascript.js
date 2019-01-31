@@ -38,6 +38,20 @@ function average(array) {
 }
 
 /**
+ * Make within a set of scalars one size come forth more often than another
+ * Scalars are assumed to have a range of 0 - 255, but other ranges can be specified
+ * 
+ * @param {Array} array
+ * @param {Number} power
+ * @param {Number} startRange
+ * @param {Number} endRange
+ * @returns {Array}
+ */
+function sizeBiasArray(array, power = 1, startRange = 0, endRange = 255) {
+    return array.map((e) => map(Math.pow(map(e, startRange, endRange, 0, 1), power), 0, 1, startRange, endRange));
+}
+
+/**
  * Create an array where each element represents a map from once index to another
  * 
  * @param {int} length 
@@ -123,9 +137,11 @@ function draw() {
     var spectrum = useIndexMapper(indexMapper, averageOutOnIntervals(fft.analyze(), spectrumInterval));
     var waveform = fft.waveform();
 
-    var averageSize = average(
-        waveform.map((e) => map(e, -1, 1, 0, minLength / 2)).concat(
-            spectrum.map((e) => map(e, 0, 255, 0, minLength / 2)),
+    var averageSizeBiased = average(
+        sizeBiasArray(
+            waveform.map((e) => map(e, -1, 1, 0, minLength / 2)).concat(
+                spectrum.map((e) => map(e, 0, 255, 0, minLength / 2)),
+            ), 0.1
         ),
     );
 
@@ -153,7 +169,7 @@ function draw() {
     endShape(CLOSE);
 
     textAlign(CENTER, CENTER);
-    textSize(averageSize);
+    textSize(averageSizeBiased);
     text('♫', centerX, centerY);
 }
 
