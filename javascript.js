@@ -2,25 +2,30 @@
  * Shuffle an array
  * 
  * @param {Array} array
+ * @param {Integer} start
+ * @param {Integer} end
  * @returns {Array}
  */
-function shuffle(array) {
-  var currentIndex = array.length, temporaryValue, randomIndex;
+function shuffleArray(array, start, end) {
+    var currentIndex = end ? end : array.length;
+    var startIndex = start ? start : 0;
+    var temporaryValue;
+    var randomIndex;
 
-  // While there remain elements to shuffle...
-  while (0 !== currentIndex) {
+    // While there remain elements to shuffle...
+    while (startIndex !== currentIndex) {
 
-    // Pick a remaining element...
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex -= 1;
+        // Pick a remaining element...
+        randomIndex = Math.floor(Math.random() * (currentIndex - startIndex) + startIndex);
+        currentIndex -= 1;
 
-    // And swap it with the current element.
-    temporaryValue = array[currentIndex];
-    array[currentIndex] = array[randomIndex];
-    array[randomIndex] = temporaryValue;
-  }
+        // And swap it with the current element.
+        temporaryValue = array[currentIndex];
+        array[currentIndex] = array[randomIndex];
+        array[randomIndex] = temporaryValue;
+    }
 
-  return array;
+    return array;
 }
 
 /**
@@ -64,7 +69,7 @@ function createIndexMapper(length) {
         mapper[i] = i;
     }
 
-    mapper = shuffle(mapper);
+    mapper = shuffleArray(mapper);
 
     return mapper;
 }
