@@ -2,7 +2,7 @@
  * Shuffle an array
  * 
  * @param {Array} array
- * @return {Array}
+ * @returns {Array}
  */
 function shuffle(array) {
   var currentIndex = array.length, temporaryValue, randomIndex;
@@ -24,10 +24,24 @@ function shuffle(array) {
 }
 
 /**
+ * Return the average of an array
+ *
+ * @param {Array} array
+ * @returns {Number}
+ */
+function average(array) {
+    var sum = 0;
+
+    array.forEach((e) => sum += e);
+
+    return sum / array.length;
+}
+
+/**
  * Create an array where each element represents a map from once index to another
  * 
  * @param {int} length 
- * @return {Array}
+ * @returns {Array}
  */
 function createIndexMapper(length) {
     var mapper = new Array(length);
@@ -47,7 +61,7 @@ function createIndexMapper(length) {
  * 
  * @param {Array} mapper 
  * @param {Array} array
- * @return {Array}
+ * @returns {Array}
  */
 function useIndexMapper(mapper, array) {
     var newArray = new Array(array.length);
@@ -63,7 +77,7 @@ function useIndexMapper(mapper, array) {
  * 
  * @param {Array} array
  * @param {Number} interval
- * @return {Array}
+ * @returns {Array}
  */
 function averageOutOnIntervals(array, interval) {
     var newArray = [];
@@ -90,6 +104,8 @@ function setup() {
     cnv.mouseClicked(togglePlay);
     fft = new p5.FFT();
     sound.amp(0.2);
+
+    textFont('Impact');
 }
 
 // 1024 is the size of both the spectrum array and the waveform array
@@ -106,6 +122,12 @@ function draw() {
 
     var spectrum = useIndexMapper(indexMapper, averageOutOnIntervals(fft.analyze(), spectrumInterval));
     var waveform = fft.waveform();
+
+    var averageSize = average(
+        waveform.map((e) => map(e, -1, 1, 0, minLength / 2)).concat(
+            spectrum.map((e) => map(e, 0, 255, 0, minLength / 2)),
+        ),
+    );
 
     noFill();
     beginShape();
@@ -129,6 +151,10 @@ function draw() {
         vertex(x, y);
     }
     endShape(CLOSE);
+
+    textAlign(CENTER, CENTER);
+    textSize(averageSize);
+    text('Q', centerX, centerY);
 }
 
 // fade sound if mouse is over canvas
