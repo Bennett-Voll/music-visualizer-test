@@ -114,14 +114,26 @@ function averageOutOnIntervals(array, interval) {
     return newArray;
 }
 
+/**
+ * Scale the size by a scalar
+ * I know that this function is trivial, but it's of semetic importance
+ * 
+ * @param {Number} scalar 
+ * @param {Number} size
+ * @returns {Number}
+ */
+function scaleTo(scalar, size) {
+    return scalar * size;
+}
+
 function preload() {
-    sound = loadSound('assets/boc.mp3');
+    sound = loadSound('assets/gorrilaz.mp3');
 }
 
 var cnv;
 
 // 1024 is the size of both the spectrum array and the waveform array
-var spectrumInterval = 10;
+var spectrumInterval = 8;
 var spectrumSize = Math.ceil(1024 / spectrumInterval);
 var indexMapper = createIndexMapper(spectrumSize);
 
@@ -139,25 +151,25 @@ function draw() {
 
     var centerX = width / 2;
     var centerY = height / 2;
-    var minLength = Math.min(width, height) / 2;
+    var roomScale = Math.min(width, height);
 
     var realSpectrum = fft.analyze();
     var spectrum = useIndexMapper(indexMapper, averageOutOnIntervals(realSpectrum, spectrumInterval));
     var waveform = fft.waveform();
 
     var averageSize = average(
-        waveform.map((e) => map(Math.abs(e), 0, 1, minLength / 4, minLength * 1.8)).concat(
-            realSpectrum.map((e) => map(e, 0, 255, 0, minLength * 1.8)),
+        waveform.map((e) => map(Math.abs(e), 0, 1, 0, 255)).concat(
+            realSpectrum.map((e) => map(e, 0, 255, 0, 255)),
         ),
     );
 
     // console.log(averageSize)
 
     // set fill to this weird color that grows with the averageSize
-    fill(map(averageSize, 0, 255, 0, 200) - minLength / 2 + 100, 0, 0);
-    
+    fill(scaleTo(averageSize, 0.85), 0, 0);
+
     beginShape();
-    stroke(160, 11, 11); // waveform is red
+    stroke(160, 11, 11);
     strokeWeight(1);
     for (var i = 0; i < waveform.length; i += 1) {
         var waveI = i;
@@ -165,11 +177,11 @@ function draw() {
 
         var deg = map(i, 0, waveform.length, 0, Math.PI * 2);
 
-        var waveformX = map(waveform[waveI], -1, 1, 0, minLength / 2);
-        var waveformY = map(waveform[waveI], -1, 1, 0, minLength / 2);
+        var waveformX = map(waveform[waveI], -1, 1, 0, scaleTo(0.2, roomScale));
+        var waveformY = map(waveform[waveI], -1, 1, 0, scaleTo(0.2, roomScale));
 
-        var spectrumX = map(spectrum[specI], 0, 255, 0, minLength / 3);
-        var spectrumY = map(spectrum[specI], 0, 255, 0, minLength / 3);
+        var spectrumX = map(spectrum[specI], 0, 255, 0, scaleTo(0.12, roomScale));
+        var spectrumY = map(spectrum[specI], 0, 255, 0, scaleTo(0.12, roomScale));
 
         var x = centerX + (waveformX + spectrumX) * Math.cos(deg);
         var y = centerY + (waveformY + spectrumY) * Math.sin(deg);
@@ -179,7 +191,7 @@ function draw() {
     endShape(CLOSE);
 
     textAlign(CENTER, CENTER);
-    textSize(averageSize);
+    textSize(map(averageSize + 100, 0, 255, 0, scaleTo(0.2, roomScale)));
     text('♫', centerX, centerY);
 }
 
