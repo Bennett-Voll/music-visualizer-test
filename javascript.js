@@ -1,27 +1,66 @@
-function shuffle(array) {
-  var currentIndex = array.length, temporaryValue, randomIndex;
+/**
+ * Shuffle an array
+ * 
+ * @param {Array} array
+ * @param {Integer} start
+ * @param {Integer} end
+ * @returns {Array}
+ */
+function shuffleArray(array, start, end) {
+    var currentIndex = end ? end : array.length;
+    var startIndex = start ? start : 0;
+    var temporaryValue;
+    var randomIndex;
 
-  // While there remain elements to shuffle...
-  while (0 !== currentIndex) {
+    // While there remain elements to shuffle...
+    while (startIndex !== currentIndex) {
 
-    // Pick a remaining element...
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex -= 1;
+        // Pick a remaining element...
+        randomIndex = Math.floor(Math.random() * (currentIndex - startIndex) + startIndex);
+        currentIndex -= 1;
 
-    // And swap it with the current element.
-    temporaryValue = array[currentIndex];
-    array[currentIndex] = array[randomIndex];
-    array[randomIndex] = temporaryValue;
-  }
+        // And swap it with the current element.
+        temporaryValue = array[currentIndex];
+        array[currentIndex] = array[randomIndex];
+        array[randomIndex] = temporaryValue;
+    }
 
-  return array;
+    return array;
+}
+
+/**
+ * Return the average of an array
+ *
+ * @param {Array} array
+ * @returns {Number}
+ */
+function average(array) {
+    var sum = 0;
+
+    array.forEach((e) => sum += e);
+
+    return sum / array.length;
+}
+
+/**
+ * Make within a set of scalars one size come forth more often than another
+ * Scalars are assumed to have a range of 0 - 255, but other ranges can be specified
+ * 
+ * @param {Array} array
+ * @param {Number} power
+ * @param {Number} startRange
+ * @param {Number} endRange
+ * @returns {Array}
+ */
+function sizeBiasArray(array, power = 1, startRange = 0, endRange = 255) {
+    return array.map((e) => map(Math.pow(map(e, startRange, endRange, 0, 1), power), 0, 1, startRange, endRange));
 }
 
 /**
  * Create an array where each element represents a map from once index to another
  * 
  * @param {int} length 
- * @return {Array}
+ * @returns {Array}
  */
 function createIndexMapper(length) {
     var mapper = new Array(length);
@@ -30,7 +69,7 @@ function createIndexMapper(length) {
         mapper[i] = i;
     }
 
-    mapper = shuffle(mapper);
+    mapper = shuffleArray(mapper);
 
     return mapper;
 }
@@ -41,7 +80,7 @@ function createIndexMapper(length) {
  * 
  * @param {Array} mapper 
  * @param {Array} array
- * @return {Array}
+ * @returns {Array}
  */
 function useIndexMapper(mapper, array) {
     var newArray = new Array(array.length);
@@ -51,56 +90,109 @@ function useIndexMapper(mapper, array) {
     return newArray;
 }
 
-function preload() {
-    sound = loadSound('assets/boc.mp3');
+/**
+ * Create a new array of size array.length / interval in which each
+ * element represents the average over each interval in the original array
+ * 
+ * @param {Array} array
+ * @param {Number} interval
+ * @returns {Array}
+ */
+function averageOutOnIntervals(array, interval) {
+    var newArray = [];
+    var sum = 0;
+
+    array.forEach((e, i) => {
+        sum += e;
+
+        if (i % interval === interval - 1) {
+            newArray.push(sum / interval);
+            sum = 0;
+        }
+    });
+
+    return newArray;
 }
 
+/**
+ * Scale the size by a scalar
+ * I know that this function is trivial, but it's of semetic importance
+ * 
+ * @param {Number} scalar 
+ * @param {Number} size
+ * @returns {Number}
+ */
+function scaleTo(scalar, size) {
+    return scalar * size;
+}
+
+function preload() {
+    sound = loadSound('assets/gorrilaz.mp3');
+}
+
+var cnv;
+
+// 1024 is the size of both the spectrum array and the waveform array
+var spectrumInterval = 8;
+var spectrumSize = Math.ceil(1024 / spectrumInterval);
+var indexMapper = createIndexMapper(spectrumSize);
+
 function setup() {
-    var cnv = createCanvas(window.innerWidth, window.innerHeight);
+    cnv = createCanvas(window.innerWidth, window.innerHeight);
     cnv.mouseClicked(togglePlay);
     fft = new p5.FFT();
     sound.amp(0.2);
-}
 
-// 1024 is the size of both the spectrum array and the waveform array
-var indexMapper = createIndexMapper(1024);
+    textFont('Impact');
+}
 
 function draw() {
     background(0);
 
     var centerX = width / 2;
     var centerY = height / 2;
-    var minLength = Math.min(width, height) / 2;
+    var roomScale = Math.min(width, height);
 
-    var spectrum = useIndexMapper(indexMapper, fft.analyze());
+    var realSpectrum = fft.analyze();
+    var spectrum = useIndexMapper(indexMapper, averageOutOnIntervals(realSpectrum, spectrumInterval));
     var waveform = fft.waveform();
 
-    noFill();
+    var averageSize = average(
+        waveform.map((e) => map(Math.abs(e), 0, 1, 0, 255)).concat(
+            realSpectrum.map((e) => map(e, 0, 255, 0, 255)),
+        ),
+    );
+
+    // console.log(averageSize)
+
+    // set fill to this weird color that grows with the averageSize
+    fill(scaleTo(averageSize, 0.85), 0, 0);
+
     beginShape();
-    stroke(196, 11, 11); // waveform is red
+    stroke(160, 11, 11);
     strokeWeight(1);
     for (var i = 0; i < waveform.length; i += 1) {
         var waveI = i;
-        var specI = i === waveform.length - 1 ? i : i - i % 4;
+        var specI = Math.floor(map(i, 0, waveform.length - 1, 0, spectrumSize));
 
         var deg = map(i, 0, waveform.length, 0, Math.PI * 2);
 
-        var waveformX = map(waveform[waveI], -1, 1, 0, minLength / 2);
-        var waveformY = map(waveform[waveI], -1, 1, 0, minLength / 2);
+        var waveformX = map(waveform[waveI], -1, 1, 0, scaleTo(0.2, roomScale));
+        var waveformY = map(waveform[waveI], -1, 1, 0, scaleTo(0.2, roomScale));
 
-        var spectrumX = map(spectrum[specI], 0, 255, 0, minLength / 3);
-        var spectrumY = map(spectrum[specI], 0, 255, 0, minLength / 3);
+        var spectrumX = map(spectrum[specI], 0, 255, 0, scaleTo(0.12, roomScale));
+        var spectrumY = map(spectrum[specI], 0, 255, 0, scaleTo(0.12, roomScale));
 
         var x = centerX + (waveformX + spectrumX) * Math.cos(deg);
         var y = centerY + (waveformY + spectrumY) * Math.sin(deg);
         
         vertex(x, y);
     }
-    vertex(
-        centerX + map(waveform[0], -1, 1, 0, minLength / 2) + map(spectrum[0], 0, 255, 0, minLength / 3),
-        centerY
-    );
-    endShape();
+    endShape(CLOSE);
+
+    textAlign(CENTER, CENTER);
+    textSize(map(averageSize + 100, 0, 255, 0, scaleTo(0.2, roomScale)));
+    text('♫', centerX, centerY);
 }
 
 // fade sound if mouse is over canvas
@@ -110,4 +202,8 @@ function togglePlay() {
     } else {
         sound.loop();
     }
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
 }
