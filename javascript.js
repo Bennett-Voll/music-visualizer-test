@@ -192,4 +192,6 @@ function togglePlay() {
     }
 }
 
-window.addEventListener('resize', () => resizeCanvas(window.innerWidth, window.innerHeight))
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+}
